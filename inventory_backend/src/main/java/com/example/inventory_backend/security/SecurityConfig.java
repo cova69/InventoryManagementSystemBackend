@@ -77,7 +77,7 @@ public class SecurityConfig {
                     .requestMatchers("/api/test/manager").hasAnyRole("MANAGER", "ADMIN")
                     .requestMatchers("/api/test/admin").hasRole("ADMIN")
                     .requestMatchers("/api/users/**").hasRole("ADMIN")
-                    .requestMatchers("/api/admin/users/**").permitAll() // Temporarily allow all access for testing
+                    .requestMatchers("/api/admin/users/**").hasRole("ADMIN")
                     .requestMatchers(HttpMethod.POST, "/api/products/**").hasAnyRole("ADMIN", "MANAGER")
                     .requestMatchers(HttpMethod.PUT, "/api/products/**").hasAnyRole("ADMIN", "MANAGER")
                     .requestMatchers(HttpMethod.DELETE, "/api/products/**").hasAnyRole("ADMIN", "MANAGER")

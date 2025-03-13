@@ -2,6 +2,7 @@ package com.example.inventory_backend.controller;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.regex.Pattern;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -65,6 +66,12 @@ public class UserController {
                     .body(new MessageResponse("Error: Password is required"));
         }
         
+        // Validate password
+        ResponseEntity<?> passwordValidation = validatePassword(userDTO.getPassword());
+        if (passwordValidation != null) {
+            return passwordValidation;
+        }
+        
         User user = convertToEntity(userDTO);
         user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
         
@@ -87,10 +94,17 @@ public class UserController {
             
             // Only update password if provided
             if (userDTO.getPassword() != null && !userDTO.getPassword().isEmpty()) {
+                // Validate password
+                ResponseEntity<?> passwordValidation = validatePassword(userDTO.getPassword());
+                if (passwordValidation != null) {
+                    return passwordValidation;
+                }
+                
                 existingUser.setPassword(passwordEncoder.encode(userDTO.getPassword()));
             }
             
-            if (userDTO.getRole() != null) {
+            // Only try to update role if explicitly provided and not empty
+            if (userDTO.getRole() != null && !userDTO.getRole().isEmpty()) {
                 try {
                     Role role = Role.valueOf(userDTO.getRole());
                     existingUser.setRole(role);
@@ -117,6 +131,34 @@ public class UserController {
         }
     }
     
+    private ResponseEntity<?> validatePassword(String password) {
+        // At least 8 characters long
+        if (password.length() < 8) {
+            return ResponseEntity.badRequest()
+                    .body(new MessageResponse("Error: Password must be at least 8 characters long"));
+        }
+        
+        // Include at least one uppercase letter
+        if (!Pattern.compile("[A-Z]").matcher(password).find()) {
+            return ResponseEntity.badRequest()
+                    .body(new MessageResponse("Error: Password must include at least one uppercase letter"));
+        }
+        
+        // Include at least one number
+        if (!Pattern.compile("[0-9]").matcher(password).find()) {
+            return ResponseEntity.badRequest()
+                    .body(new MessageResponse("Error: Password must include at least one number"));
+        }
+        
+        // Include at least one special character
+        if (!Pattern.compile("[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?]").matcher(password).find()) {
+            return ResponseEntity.badRequest()
+                    .body(new MessageResponse("Error: Password must include at least one special character"));
+        }
+        
+        return null; // Password is valid
+    }
+    
     private UserDTO convertToDTO(User user) {
         UserDTO dto = new UserDTO();
         dto.setId(user.getId());
@@ -134,7 +176,7 @@ public class UserController {
         
         // Password will be set in the controller
         
-        if (dto.getRole() != null) {
+        if (dto.getRole() != null && !dto.getRole().isEmpty()) {
             try {
                 Role role = Role.valueOf(dto.getRole());
                 user.setRole(role);
