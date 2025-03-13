@@ -5,6 +5,7 @@ import com.example.inventory_backend.model.Inventory;
 import com.example.inventory_backend.model.Product;
 import com.example.inventory_backend.repository.InventoryRepository;
 import com.example.inventory_backend.repository.ProductRepository;
+import com.example.inventory_backend.service.InventoryHistoryService;
 import com.example.inventory_backend.service.InventoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,9 @@ public class InventoryServiceImpl implements InventoryService {
 
     private final InventoryRepository inventoryRepository;
     private final ProductRepository productRepository;
+    
+    @Autowired
+    private InventoryHistoryService historyService;
     
     @Autowired
     public InventoryServiceImpl(InventoryRepository inventoryRepository, ProductRepository productRepository) {
@@ -49,8 +53,18 @@ public class InventoryServiceImpl implements InventoryService {
     
     @Override
     public Inventory saveInventory(Inventory inventory) {
+        boolean isNewInventory = inventory.getId() == null;
         inventory.setLastUpdated(LocalDateTime.now());
-        return inventoryRepository.save(inventory);
+        Inventory savedInventory = inventoryRepository.save(inventory);
+        
+        // Record history
+        if (isNewInventory) {
+            historyService.recordProductChange(inventory.getProduct(), inventory.getQuantity(), "Initial inventory");
+        } else {
+            historyService.recordInventoryState();
+        }
+        
+        return savedInventory;
     }
     
     @Override
@@ -65,7 +79,13 @@ public class InventoryServiceImpl implements InventoryService {
         inventory.setQuantity(inventory.getQuantity() + quantityChange);
         inventory.setLastUpdated(LocalDateTime.now());
         
-        return inventoryRepository.save(inventory);
+        Inventory updatedInventory = inventoryRepository.save(inventory);
+        
+        // Record history after update
+        historyService.recordProductChange(product, quantityChange, 
+                quantityChange > 0 ? "Stock increase" : "Stock decrease");
+        
+        return updatedInventory;
     }
     
     @Override
@@ -81,6 +101,14 @@ public class InventoryServiceImpl implements InventoryService {
     
     @Override
     public void deleteInventory(Long id) {
+        Inventory inventory = inventoryRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Inventory not found with id: " + id));
+        
+        Product product = inventory.getProduct();
+        
         inventoryRepository.deleteById(id);
+        
+        // Record the deletion in history
+        historyService.recordProductChange(product, -inventory.getQuantity(), "Inventory deleted");
     }
 }

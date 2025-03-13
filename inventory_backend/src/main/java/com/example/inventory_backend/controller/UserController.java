@@ -27,7 +27,7 @@ import com.example.inventory_backend.service.UserService;
 @CrossOrigin(origins = "http://localhost:3000")
 @RestController
 @RequestMapping("/api/users")
-@PreAuthorize("hasAuthority('ADMIN')")
+@PreAuthorize("hasRole('ADMIN')")  
 public class UserController {
 
     @Autowired
@@ -35,6 +35,12 @@ public class UserController {
     
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @GetMapping("/test")
+    @PreAuthorize("permitAll()")
+    public ResponseEntity<String> testEndpoint() {
+        return ResponseEntity.ok("User controller is accessible");
+    }
 
     @GetMapping
     public List<UserDTO> getAllUsers() {
@@ -116,7 +122,6 @@ public class UserController {
         dto.setId(user.getId());
         dto.setName(user.getName());
         dto.setEmail(user.getEmail());
-        // Don't include password in the DTO for security reasons
         dto.setRole(user.getRole().name());
         return dto;
     }

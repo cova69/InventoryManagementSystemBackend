@@ -18,7 +18,9 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/inventory")
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = "http://localhost:3000", methods = {
+    RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE, RequestMethod.OPTIONS
+})
 public class InventoryController {
 
     private final InventoryService inventoryService;
@@ -71,7 +73,8 @@ public class InventoryController {
         return new ResponseEntity<>(convertToDTO(savedInventory), HttpStatus.CREATED);
     }
     
-    @PatchMapping("/update-quantity/{productId}")
+    // Changed from PATCH to PUT to avoid CORS issues
+    @PutMapping("/update-quantity/{productId}")
     public ResponseEntity<InventoryDTO> updateQuantity(
             @PathVariable Long productId, 
             @RequestBody Map<String, Integer> quantityUpdate) {

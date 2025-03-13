@@ -63,7 +63,7 @@ public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest login
 
     return ResponseEntity.ok(new JwtResponse(jwt,
             userDetails.getId(),
-            userDetails.getUsername(), // Check what this returns
+            userDetails.getUsername(), 
             userDetails.getEmail(),
             roles));
         }
