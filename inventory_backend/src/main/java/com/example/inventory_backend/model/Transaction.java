@@ -1,20 +1,10 @@
 // Transaction.java
 package com.example.inventory_backend.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Data;
-
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.math.BigDecimal;
 
 @Entity
 @Table(name = "transactions")
@@ -32,14 +22,25 @@ public class Transaction {
     @Column(nullable = false)
     private TransactionType type;
     
+    @Column(nullable = false)
     private Integer quantity;
     
     @Column(name = "transaction_date", nullable = false)
     private LocalDateTime transactionDate;
     
-    private BigDecimal price;
+    private BigDecimal unitPrice;
+    
+    @Column(name = "total_amount")
+    private BigDecimal totalAmount;
     
     private String notes;
+    
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User createdBy;
+    
+    @Column(name = "reference_number")
+    private String referenceNumber;
     
     public enum TransactionType {
         PURCHASE, 
