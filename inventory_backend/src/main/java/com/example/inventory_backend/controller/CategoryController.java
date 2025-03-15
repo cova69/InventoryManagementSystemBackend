@@ -4,6 +4,8 @@ package com.example.inventory_backend.controller;
 import com.example.inventory_backend.dto.CategoryDTO;
 import com.example.inventory_backend.model.Category;
 import com.example.inventory_backend.service.CategoryService;
+import com.example.inventory_backend.service.NotificationService;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +20,9 @@ import java.util.stream.Collectors;
 public class CategoryController {
 
     private final CategoryService categoryService;
+
+    @Autowired
+    private NotificationService notificationService;
 
     @Autowired
     public CategoryController(CategoryService categoryService) {
@@ -54,6 +59,9 @@ public class CategoryController {
     public ResponseEntity<CategoryDTO> createCategory(@RequestBody CategoryDTO categoryDTO) {
         Category category = convertToEntity(categoryDTO);
         Category savedCategory = categoryService.saveCategory(category);
+
+        notificationService.notifyNewCategory(savedCategory.getId(), savedCategory.getName());
+        
         return new ResponseEntity<>(convertToDTO(savedCategory), HttpStatus.CREATED);
     }
 

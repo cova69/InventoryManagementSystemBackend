@@ -3,6 +3,7 @@ package com.example.inventory_backend.controller;
 
 import com.example.inventory_backend.dto.SupplierDTO;
 import com.example.inventory_backend.model.Supplier;
+import com.example.inventory_backend.service.NotificationService;
 import com.example.inventory_backend.service.SupplierService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -23,6 +24,10 @@ public class SupplierController {
     public SupplierController(SupplierService supplierService) {
         this.supplierService = supplierService;
     }
+
+    @Autowired
+    private NotificationService notificationService;
+
 
     @GetMapping
     public List<SupplierDTO> getAllSuppliers() {
@@ -52,6 +57,9 @@ public class SupplierController {
     public ResponseEntity<SupplierDTO> createSupplier(@RequestBody SupplierDTO supplierDTO) {
         Supplier supplier = convertToEntity(supplierDTO);
         Supplier savedSupplier = supplierService.saveSupplier(supplier);
+
+        notificationService.notifyNewSupplier(savedSupplier.getId(), savedSupplier.getName());
+        
         return new ResponseEntity<>(convertToDTO(savedSupplier), HttpStatus.CREATED);
     }
 

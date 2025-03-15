@@ -6,6 +6,7 @@ import com.example.inventory_backend.model.Category;
 import com.example.inventory_backend.model.Product;
 import com.example.inventory_backend.model.Supplier;
 import com.example.inventory_backend.service.CategoryService;
+import com.example.inventory_backend.service.NotificationService;
 import com.example.inventory_backend.service.ProductService;
 import com.example.inventory_backend.service.SupplierService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,7 +33,9 @@ public class ProductController {
         this.categoryService = categoryService;
         this.supplierService = supplierService;
     }
-
+    @Autowired
+    private NotificationService notificationService;
+    
     @GetMapping
     public List<ProductDTO> getAllProducts() {
         List<Product> products = productService.getAllProducts();
@@ -97,6 +100,9 @@ public class ProductController {
     public ResponseEntity<ProductDTO> createProduct(@RequestBody ProductDTO productDTO) {
         Product product = convertToEntity(productDTO);
         Product savedProduct = productService.saveProduct(product);
+
+        notificationService.notifyNewProduct(savedProduct.getId(), savedProduct.getName());
+        
         return new ResponseEntity<>(convertToDTO(savedProduct), HttpStatus.CREATED);
     }
 

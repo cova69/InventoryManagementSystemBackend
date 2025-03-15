@@ -7,6 +7,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import com.example.inventory_backend.model.User;
 import com.example.inventory_backend.repository.UserRepository;
+import com.example.inventory_backend.service.NotificationService;
 
 @RestController
 @RequestMapping("/api/admin/users")
@@ -18,6 +19,9 @@ public class AdminUserController {
     
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private NotificationService notificationService;
 
     @GetMapping
     public ResponseEntity<List<User>> getAllUsers() {
@@ -97,6 +101,9 @@ public class AdminUserController {
             user.setPassword(passwordEncoder.encode(user.getPassword()));
             
             User savedUser = userRepository.save(user);
+
+            notificationService.notifyNewUser(savedUser.getId(), savedUser.getName(), savedUser.getRole().name());
+            
             // Don't return password
             savedUser.setPassword(null);
             
