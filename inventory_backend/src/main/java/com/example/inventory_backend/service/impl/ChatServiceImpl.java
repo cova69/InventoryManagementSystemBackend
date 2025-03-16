@@ -128,10 +128,13 @@ public class ChatServiceImpl implements ChatService {
             return; // No messages to mark as read
         }
         
-        // Update the participant's lastReadMessageId
-        ChatParticipant participant = chatParticipantRepository.findByChatAndUser(chat, currentUser)
-                .orElseThrow(() -> new RuntimeException("Participant record not found"));
-        
+        // To this:
+        List<ChatParticipant> participants = chatParticipantRepository.findByChatAndUser(chat, currentUser);
+        if (participants.isEmpty()) {
+        throw new RuntimeException("Participant record not found");
+        }
+// Use the first participant record found
+ChatParticipant participant = participants.get(0);
         participant.setLastReadMessageId(latestMessage.getId());
         chatParticipantRepository.save(participant);
         
@@ -153,36 +156,38 @@ public class ChatServiceImpl implements ChatService {
     }
     
     @Override
-    @Transactional
-    public ChatDTO createNewChat(User currentUser, Long otherUserId) {
-        User otherUser = userRepository.findById(otherUserId)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + otherUserId));
-        
-        // Check if a chat already exists between these users
-        List<Chat> existingChats = chatRepository.findByTwoParticipants(currentUser, otherUser);
-        if (!existingChats.isEmpty()) {
-            return convertToDTO(existingChats.get(0), currentUser);
-        }
-        
-        // Create a new chat
-        Chat chat = new Chat();
-        chat.getParticipants().add(currentUser);
-        chat.getParticipants().add(otherUser);
-        Chat savedChat = chatRepository.save(chat);
-        
-        // Create participant records
-        ChatParticipant currentUserParticipant = new ChatParticipant();
-        currentUserParticipant.setChat(savedChat);
-        currentUserParticipant.setUser(currentUser);
-        chatParticipantRepository.save(currentUserParticipant);
-        
-        ChatParticipant otherUserParticipant = new ChatParticipant();
-        otherUserParticipant.setChat(savedChat);
-        otherUserParticipant.setUser(otherUser);
-        chatParticipantRepository.save(otherUserParticipant);
-        
-        return convertToDTO(savedChat, currentUser);
+@Transactional
+public ChatDTO createNewChat(User currentUser, Long otherUserId) {
+    User otherUser = userRepository.findById(otherUserId)
+            .orElseThrow(() -> new RuntimeException("User not found with id: " + otherUserId));
+    
+    // Check if a chat already exists between these users
+    List<Chat> existingChats = chatRepository.findByTwoParticipants(currentUser, otherUser);
+    if (!existingChats.isEmpty()) {
+        return convertToDTO(existingChats.get(0), currentUser);
     }
+    
+    // Create a new chat
+    Chat chat = new Chat();
+    Chat savedChat = chatRepository.save(chat);
+    
+    // Create participant records
+    ChatParticipant currentUserParticipant = new ChatParticipant();
+    currentUserParticipant.setChat(savedChat);
+    currentUserParticipant.setUser(currentUser);
+    chatParticipantRepository.save(currentUserParticipant);
+    
+    ChatParticipant otherUserParticipant = new ChatParticipant();
+    otherUserParticipant.setChat(savedChat);
+    otherUserParticipant.setUser(otherUser);
+    chatParticipantRepository.save(otherUserParticipant);
+    
+    // REMOVE THIS LINE - it's causing the duplicate error
+    // chat.getParticipants().add(currentUser);
+    // chat.getParticipants().add(otherUser);
+    
+    return convertToDTO(savedChat, currentUser);
+}
     
     // Helper methods for DTO conversion
     private ChatDTO convertToDTO(Chat chat, User currentUser) {

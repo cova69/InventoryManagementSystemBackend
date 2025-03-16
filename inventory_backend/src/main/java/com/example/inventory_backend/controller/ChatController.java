@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/chat")
@@ -85,9 +86,33 @@ public class ChatController {
         return ResponseEntity.ok(chat);
     }
     
+    // New endpoint to get available users for chat
+    @GetMapping("/users")
+    public ResponseEntity<List<UserDTO>> getAvailableChatUsers() {
+        // Return all active users except the current user
+        User currentUser = getCurrentUser();
+        List<User> users = userService.getAllUsers()
+            .stream()
+            .filter(user -> !user.getId().equals(currentUser.getId()))
+            .collect(Collectors.toList());
+            
+        return ResponseEntity.ok(users.stream()
+            .map(this::convertToDTO)
+            .collect(Collectors.toList()));
+    }
+    
     private User getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         return userService.getUserById(userDetails.getId());
+    }
+    
+    private UserDTO convertToDTO(User user) {
+        UserDTO dto = new UserDTO();
+        dto.setId(user.getId());
+        dto.setName(user.getName());
+        dto.setEmail(user.getEmail());
+        dto.setRole(user.getRole().name());
+        return dto;
     }
 }
