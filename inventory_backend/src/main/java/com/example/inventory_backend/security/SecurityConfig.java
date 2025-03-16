@@ -66,12 +66,14 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> 
                 auth.requestMatchers("/api/auth/**").permitAll()
+                    
                     .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()  // Important for CORS preflight requests
                     .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/suppliers/**").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/inventory/**").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/export/**").authenticated()
+                    .requestMatchers("/api/admin/users/**").authenticated() // Temporarily reduce security to identify the issue
                     .requestMatchers("/api/test/public").permitAll()
                     .requestMatchers("/api/test/user").authenticated()
                     .requestMatchers("/api/test/manager").hasAnyRole("MANAGER", "ADMIN")
